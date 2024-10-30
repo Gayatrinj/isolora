@@ -1,20 +1,139 @@
+// "use client";
+
+// import { useState } from "react";
+// import { useRouter } from "next/navigation";
+
+// export default function SignupForm() {
+//   const router = useRouter();
+//   const [signupName, setSignupName] = useState("");
+//   const [signupEmail, setSignupEmail] = useState("");
+//   const [signupPassword, setSignupPassword] = useState("");
+//   const [userRole, setUserRole] = useState("customer"); 
+
+//   const handleSignup = async () => {
+//     console.log("Attempting signup with:", {
+//       name: signupName,
+//       email: signupEmail,
+//       password: signupPassword,
+//       role: userRole,
+//     });
+
+//     try {
+//       const res = await fetch("/api/user/add-user", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({
+//           name: signupName,
+//           email: signupEmail,
+//           password: signupPassword,
+//           role: userRole,
+//         }),
+//       });
+
+//       const data = await res.json();
+//       console.log("Signup response:", data);
+
+//       if (data.success) {
+//         alert("Signup successful. Please log in.");
+//         router.push("/"); 
+//       } else {
+//         alert(data.message || "Signup failed");
+//       }
+//     } catch (error) {
+//       console.error("Error during signup:", error);
+//       alert("An error occurred during signup.");
+//     }
+//   };
+
+//   return (
+//     <div className="bg-white p-8 rounded shadow-md w-full max-w-md mx-auto">
+//       <h2 className="text-2xl font-bold mb-4 text-black">Sign Up</h2>
+//       <form autoComplete="off">
+//         <select
+//           value={userRole}
+//           onChange={(e) => setUserRole(e.target.value)}
+//           className="mb-4 p-2 border rounded w-full text-black"
+//         >
+//           <option value="customer">Customer</option>
+//           <option value="vendor">Vendor</option>
+//         </select>
+//         <input
+//           type="text"
+//           placeholder="Name"
+//           value={signupName}
+//           onChange={(e) => setSignupName(e.target.value)}
+//           className="mb-4 p-2 border rounded w-full text-black"
+//         />
+//         <input
+//           type="email"
+//           placeholder="Email"
+//           value={signupEmail}
+//           onChange={(e) => setSignupEmail(e.target.value)}
+//           className="mb-4 p-2 border rounded w-full text-black"
+//         />
+//         <input
+//           type="password"
+//           placeholder="Password"
+//           value={signupPassword}
+//           onChange={(e) => setSignupPassword(e.target.value)}
+//           className="mb-4 p-2 border rounded w-full text-black"
+//         />
+//         <button
+//           type="button"
+//           onClick={handleSignup}
+//           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition w-full"
+//         >
+//           signup
+//         </button>
+//       </form>
+//     </div>
+//   );
+// }
+
+
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function SignupForm() {
+export default function AuthForm() {
   const router = useRouter();
+  const [isLogin, setIsLogin] = useState(true); // Toggle between login and signup
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [signupName, setSignupName] = useState("");
-  const [signupEmail, setSignupEmail] = useState("");
-  const [signupPassword, setSignupPassword] = useState("");
   const [userRole, setUserRole] = useState("customer"); 
+
+  const handleLogin = async () => {
+    console.log("Attempting login with:", { email, password });
+
+    try {
+      const res = await fetch("/api/user/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+      console.log("Login response:", data);
+
+      if (data.success) {
+        alert("Login successful.");
+        router.push("/"); // Redirect after login
+      } else {
+        alert(data.message || "Login failed");
+      }
+    } catch (error) {
+      console.error("Error during login:", error);
+      alert("An error occurred during login.");
+    }
+  };
 
   const handleSignup = async () => {
     console.log("Attempting signup with:", {
       name: signupName,
-      email: signupEmail,
-      password: signupPassword,
+      email:email,
+      password:password,
       role: userRole,
     });
 
@@ -24,8 +143,8 @@ export default function SignupForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: signupName,
-          email: signupEmail,
-          password: signupPassword,
+          email,
+          password,
           role: userRole,
         }),
       });
@@ -35,7 +154,8 @@ export default function SignupForm() {
 
       if (data.success) {
         alert("Signup successful. Please log in.");
-        router.push("/"); 
+        setIsLogin(true); // Switch to login mode after signup
+        router.push("/pages/signup");
       } else {
         alert(data.message || "Signup failed");
       }
@@ -47,45 +167,60 @@ export default function SignupForm() {
 
   return (
     <div className="bg-white p-8 rounded shadow-md w-full max-w-md mx-auto">
-      <h2 className="text-2xl font-bold mb-4 text-black">Sign Up</h2>
+      <h2 className="text-2xl font-bold mb-4 text-black">
+        {isLogin ? "Log In" : "Sign Up"}
+      </h2>
       <form autoComplete="off">
-        <select
-          value={userRole}
-          onChange={(e) => setUserRole(e.target.value)}
-          className="mb-4 p-2 border rounded w-full text-black"
-        >
-          <option value="customer">Customer</option>
-          <option value="vendor">Vendor</option>
-        </select>
-        <input
-          type="text"
-          placeholder="Name"
-          value={signupName}
-          onChange={(e) => setSignupName(e.target.value)}
-          className="mb-4 p-2 border rounded w-full text-black"
-        />
+        {!isLogin && (
+          <>
+            <select
+              value={userRole}
+              onChange={(e) => setUserRole(e.target.value)}
+              className="mb-4 p-2 border rounded w-full text-black"
+            >
+              <option value="customer">Customer</option>
+              <option value="vendor">Vendor</option>
+            </select>
+            <input
+              type="text"
+              placeholder="Name"
+              value={signupName}
+              onChange={(e) => setSignupName(e.target.value)}
+              className="mb-4 p-2 border rounded w-full text-black"
+            />
+          </>
+        )}
         <input
           type="email"
           placeholder="Email"
-          value={signupEmail}
-          onChange={(e) => setSignupEmail(e.target.value)}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           className="mb-4 p-2 border rounded w-full text-black"
         />
         <input
           type="password"
           placeholder="Password"
-          value={signupPassword}
-          onChange={(e) => setSignupPassword(e.target.value)}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
           className="mb-4 p-2 border rounded w-full text-black"
         />
         <button
           type="button"
-          onClick={handleSignup}
+          onClick={isLogin ? handleLogin : handleSignup}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition w-full"
         >
-          Register
+          {isLogin ? "Log In" : "Sign Up"}
         </button>
       </form>
+      <p className="mt-4 text-center text-sm text-gray-600">
+        {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
+        <span
+          onClick={() => setIsLogin(!isLogin)}
+          className="text-blue-600 cursor-pointer hover:underline"
+        >
+          {isLogin ? "Sign up" : "Log in"}
+        </span>
+      </p>
     </div>
   );
 }

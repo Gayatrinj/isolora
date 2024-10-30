@@ -3,10 +3,10 @@ import AuthService from '@/app/servises/auth';
 
 export async function POST(request: Request) {
   try {
-    const { name, email, password, role } = await request.json();
-    console.log('Received vendor registration data:', { name, email, password, role });
+    const { email, password } = await request.json();
+    console.log('Received vendor registration data:', {  email, password });
 
-    const result = await AuthService.signup(name, email, password, role);
+    const result = await AuthService.login(email, password);
 
     if (result.success) {
       return NextResponse.json(
