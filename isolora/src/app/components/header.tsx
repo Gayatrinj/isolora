@@ -3,6 +3,7 @@
 
 import { useUser } from "../context/usercontext";
 import { useRouter } from "next/navigation";
+import Link from "next/link"; // Import Link from Next.js for navigation
 
 const Header = () => {
   const router = useRouter();
@@ -25,6 +26,13 @@ const Header = () => {
         {user ? (
           <div className="text-right">
             <p className="font-semibold">{user.name}</p>
+            {user.role === "vendor" && (
+              <Link href="/pages/add-items">
+                <button className="mt-1 px-3 py-1 text-sm font-medium bg-green-500 rounded hover:bg-green-600">
+                  Add Items
+                </button>
+              </Link>
+            )}
             <button
               onClick={handleLogout}
               className="mt-1 px-3 py-1 text-sm font-medium bg-red-500 rounded hover:bg-red-600"
