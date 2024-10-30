@@ -1,4 +1,3 @@
-import Link from "next/link";
 import Header from "./components/header";
 import ItemList from "./components/itemsList";
 export default function Home() {
