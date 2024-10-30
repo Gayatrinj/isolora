@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Header from "./components/header";
+import ItemList from "./components/itemsList";
 export default function Home() {
   return (
     <div>
@@ -9,12 +10,14 @@ export default function Home() {
       </h1>
       <div className="mt-4 flex justify-center sm:justify-start">
         <Link 
-          href="pages/signup"
+          href="pages/add-items"
           className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
         >
-          Signup
+          add items
         </Link>
+        
       </div>
+      <div><ItemList/></div>
     </div>
   );
 }
