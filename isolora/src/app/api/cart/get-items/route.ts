@@ -1,39 +1,32 @@
+// /api/cart/get-items/route.ts
 import { sql } from "@vercel/postgres";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
-  const userId = new URL(request.url).searchParams.get("userId");
+  const { searchParams } = new URL(request.url);
+  const userId = searchParams.get("userId");
 
   if (!userId) {
-    return NextResponse.json(
-      { success: false, message: "User ID is required" },
-      { status: 400 }
-    );
+    return NextResponse.json({ success: false, message: "User ID is required" }, { status: 400 });
   }
 
   try {
-    const userIdInt = parseInt(userId);
-    if (isNaN(userIdInt)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid User ID format" },
-        { status: 400 }
-      );
-    }
+    const cartItems = await sql`
+      SELECT cart.*, items.name, items.price, items.image_url 
+      FROM cart 
+      JOIN items ON cart.product_id = items.itemid 
+      WHERE cart.user_id = ${userId};
+    `;
 
-    const result = await sql`
-  SELECT cart.id AS cartId, cart.product_id AS productId, items.name, items.price, cart.quantity, items.image_url
-  FROM cart
-  INNER JOIN items ON cart.product_id = items.itemid
-  WHERE cart.user_id = ${userIdInt};
-`;
+    // Create response and set cache-control headers
+    const response = NextResponse.json({ success: true, cartItems: cartItems.rows });
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    response.headers.set("Expires", "0");
+    response.headers.set("Surrogate-Control", "no-store");
 
-return NextResponse.json({ success: true, cartItems: result.rows });
-
+    return response;
   } catch (error) {
     console.error("Error fetching cart items:", error);
-    return NextResponse.json(
-      { success: false, message: "Database error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, message: "Database error" }, { status: 500 });
   }
 }

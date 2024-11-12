@@ -1,14 +1,15 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useCart } from "../context/cartcontext";
 import { useUser } from "../context/usercontext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";  // Import Image component
+import Image from "next/image";
 
 const Header = () => {
   const router = useRouter();
   const { user, setUser } = useUser();
   const { cartCount, fetchCartCount } = useCart();
+  const [showTooltip, setShowTooltip] = useState(false);
 
   const handleLogin = () => {
     router.push("pages/signup");
@@ -28,34 +29,50 @@ const Header = () => {
   return (
     <header className="fixed top-0 left-0 right-0 z-10 flex items-center justify-between px-8 py-3 bg-white shadow-md">
       <Link href="/">
-        <div className="text-2xl font-bold text-blue-600 cursor-pointer">Isolora</div>
+        {/* Replace text with logo image */}
+        <Image 
+          src="/logo.PNG"  // Path to your logo file in the public folder
+          alt="Isolora Logo"
+          width={150}        // Adjust width as needed
+          height={30}        // Adjust height as needed
+          className="cursor-pointer"
+        />
       </Link>
       
       <div className="flex items-center space-x-6">
-        {/* Cart Icon with Count - only show for customers */}
-        {user?.role !== "vendor" && (
-          <Link href="/cart">
-            <button className="relative">
-              <Image 
-                src="/cart-icon.png" 
-                alt="Cart" 
-                width={20} 
-                height={20} 
-                className="w-5 h-5" 
-              />
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-2 w-4 h-4 text-xs font-semibold text-white bg-red-500 rounded-full flex items-center justify-center">
-                  {cartCount}
-                </span>
-              )}
-            </button>
-          </Link>
-        )}
+        {/* Cart Icon with Count */}
+        <Link href="/cart">
+          <button className="relative">
+            <Image 
+              src="/cart-icon.png" 
+              alt="Cart" 
+              width={20} 
+              height={20} 
+              className="w-5 h-5" 
+            />
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-2 w-4 h-4 text-xs font-semibold text-white bg-red-500 rounded-full flex items-center justify-center">
+                {cartCount}
+              </span>
+            )}
+          </button>
+        </Link>
 
         {/* Conditional rendering for login/logout and add items */}
         {user ? (
-          <div className="flex items-center space-x-4">
-            <p className="text-gray-700 font-semibold">{user.name}</p>
+          <div className="flex items-center space-x-4 relative">
+            <p
+              className="text-gray-700 font-semibold cursor-pointer relative"
+              onMouseEnter={() => setShowTooltip(true)}
+              onMouseLeave={() => setShowTooltip(false)}
+            >
+              {user.name}
+            </p>
+            {showTooltip && (
+              <div className="absolute top-8 left-0 bg-gray-700 text-white text-xs rounded px-2 py-1 shadow-lg">
+                User ID: {user.id}
+              </div>
+            )}
             {/* Show Add Items button only for vendors */}
             {user.role === "vendor" && (
               <Link href="/pages/add-items">

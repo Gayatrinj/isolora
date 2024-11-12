@@ -1,40 +1,55 @@
-"use client"
+"use client";
 import { useState } from "react";
 import Header from "./components/header";
 import ItemList from "./components/itemsList";
 
 export default function Home() {
-  const [showMessage, setShowMessage] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("All");
 
-  const toggleMessage = () => setShowMessage((prev) => !prev);
+  // Categories for the navbar
+  const categories = ["All", "Indian Wear", "Western Wear", "Footwear"];
+
+  // Function to handle category selection
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory(category);
+  };
 
   return (
     <div className="relative">
       {/* Floating Navbar */}
       <Header />
 
-      {/* Main Content */}
-      <main className="flex flex-col items-center justify-center min-h-screen mt-20">
-        <div className="text-center">
-          {/* Toggle Welcome Message Button */}
+      {/* Hero Banner */}
+      <section className="flex flex-col items-center justify-center bg-gradient-to-r from-blue-600 to-blue-800 text-white py-20">
+        <h1 className="text-4xl font-bold mb-4">Welcome to Isolora</h1>
+        <p className="text-lg max-w-2xl text-center">
+          Discover a unique collection of fashion and accessories. Shop by category, explore new arrivals, or find the perfect style for any occasion.
+          
+        </p>
+      </section>
+
+      {/* Category Navbar */}
+      <nav className="flex justify-center mt-8 space-x-4 bg-white py-4 shadow-md sticky top-0 z-10">
+        {categories.map((category) => (
           <button
-            onClick={toggleMessage}
-            className="px-6 py-3 bg-blue-600 text-white text-lg font-medium rounded-lg shadow hover:bg-blue-700 transition duration-300"
+            key={category}
+            onClick={() => handleCategorySelect(category)}
+            className={`px-4 py-2 rounded-full font-medium ${
+              selectedCategory === category
+                ? "bg-blue-600 text-white"
+                : "bg-gray-200 text-gray-700 hover:bg-blue-100"
+            }`}
           >
-            {showMessage ? "Hide Welcome Message" : "Show Welcome Message"}
+            {category}
           </button>
+        ))}
+      </nav>
 
-          {/* Welcome Message */}
-          {showMessage && (
-            <p className="mt-6 text-gray-700 text-lg bg-blue-50 p-6 rounded-lg shadow-lg transition-opacity duration-300 max-w-md mx-auto">
-              Welcome to Isolora! We’re excited to bring you something extraordinary. Stay tuned!
-            </p>
-          )}
-        </div>
-
-        {/* Item List */}
+      {/* Main Content */}
+      <main className="flex flex-col items-center justify-center mt-10 min-h-screen">
+        {/* Item List with Category Filter */}
         <div className="mt-12 w-full max-w-6xl px-4">
-          <ItemList />
+          <ItemList selectedCategory={selectedCategory} />
         </div>
       </main>
     </div>

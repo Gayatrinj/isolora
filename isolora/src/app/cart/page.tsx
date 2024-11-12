@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Image from 'next/image';  // Import Image component
+import { useEffect, useState, useCallback } from "react";
+import Image from "next/image";
 import { useUser } from "../context/usercontext";
 import { useCart } from "../context/cartcontext";
 
 interface CartItem {
-  cartid: number;        // Unique identifier for each item in the cart (cart entry ID)
-  productId: number;     // The actual product ID from the inventory
+  cartid: number;
+  product_id: number; 
   name: string;
   price: string | number;
   quantity: number;
@@ -19,10 +19,11 @@ const CartPage = () => {
   const { fetchCartCount } = useCart();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
-  useEffect(() => {
+  // Memoize fetchCartItems to avoid recreating the function on each render
+  const fetchCartItems = useCallback(async () => {
     if (!user?.id) return;
 
-    const fetchCartItems = async () => {
+    try {
       const response = await fetch(`/api/cart/get-items?userId=${user.id}`);
       const data = await response.json();
 
@@ -33,46 +34,47 @@ const CartPage = () => {
       } else {
         console.error("Error fetching cart items:", data.message);
       }
-    };
+    } catch (error) {
+      console.error("Error in fetchCartItems function:", error);
+    }
+  }, [user?.id, fetchCartCount]);
 
+  useEffect(() => {
     fetchCartItems();
-  }, [user, fetchCartCount]);
+  }, [fetchCartItems]);
 
-  const handleRemove = async (productId: number) => {
+  const refreshCartItems = async () => {
+    await fetchCartItems();
+  };
+
+  const handleRemove = async (product_id: number) => {
     if (!user?.id) return;
 
-    console.log("Attempting to remove item with productId:", productId);
+    console.log("Removing item from cart:", { userId: user.id, product_id });
 
     try {
-      const response = await fetch("/api/cart/remove", {
+      const response = await fetch(`/api/cart/delete-item?userId=${user.id}&product_id=${product_id}`, {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId: user.id,
-          productId: productId,
-        }),
       });
 
-      const data = await response.json();
-      console.log("Response from remove API:", data);
-
-      if (data.success) {
-        setCartItems((prevItems) => prevItems.filter((item) => item.productId !== productId));
-        fetchCartCount();
-        alert("Item removed from cart.");
+      if (response.ok) {
+        const data = await response.json().catch(() => null);
+        if (data?.success) {
+          console.log(`Item successfully removed: product_id ${product_id}`);
+          await refreshCartItems();
+          fetchCartCount();
+        } else {
+          console.error("Failed to remove item from cart:", data?.message || "Unknown error");
+        }
       } else {
-        console.warn("Error removing item:", data.message);
-        alert(data.message || "Error removing item from cart.");
+        console.error("Error: Received non-OK response", response.status);
       }
     } catch (error) {
       console.error("Error in handleRemove function:", error);
-      alert("An error occurred while removing the item.");
     }
   };
 
-  const updateQuantity = async (productId: number, newQuantity: number) => {
+  const updateQuantity = async (product_id: number, newQuantity: number) => {
     if (newQuantity < 1 || !user?.id) return;
 
     try {
@@ -81,18 +83,23 @@ const CartPage = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ userId: user.id, productId, quantity: newQuantity }),
+        body: JSON.stringify({ 
+          userId: user.id, 
+          product_id,
+          quantity: newQuantity 
+        }),
       });
 
       const data = await response.json();
       if (data.success) {
+        console.log(`Quantity updated for product_id: ${product_id} to ${newQuantity}`);
         setCartItems((prevItems) =>
           prevItems.map((item) =>
-            item.productId === productId ? { ...item, quantity: newQuantity } : item
+            item.product_id === product_id ? { ...item, quantity: newQuantity } : item
           )
         );
       } else {
-        alert("Error updating quantity.");
+        console.error("Error updating quantity:", data.message);
       }
     } catch (error) {
       console.error("Error updating quantity:", error);
@@ -107,15 +114,15 @@ const CartPage = () => {
     <div className="p-6 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Your Cart</h1>
       {cartItems.length > 0 ? (
-        cartItems.map((item) => (
-          <div key={item.cartid} className="flex justify-between items-center border-b border-gray-300 py-4">
+        cartItems.map((item: CartItem) => (
+          <div key={item.product_id} className="flex justify-between items-center border-b border-gray-300 py-4">
             <div className="flex items-center space-x-4">
               {item.image_url && (
                 <Image
                   src={item.image_url}
                   alt={item.name}
-                  width={64}  // Set a suitable width
-                  height={64} // Set a suitable height
+                  width={64}
+                  height={64}
                   className="object-cover rounded-md"
                 />
               )}
@@ -127,14 +134,14 @@ const CartPage = () => {
                 </p>
                 <div className="flex space-x-2 mt-2">
                   <button
-                    onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                    onClick={() => updateQuantity(item.product_id, item.quantity - 1)}
                     className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 transition"
                   >
                     -
                   </button>
                   <span className="px-3 py-1 border rounded">{item.quantity}</span>
                   <button
-                    onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                    onClick={() => updateQuantity(item.product_id, item.quantity + 1)}
                     className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 transition"
                   >
                     +
@@ -150,7 +157,7 @@ const CartPage = () => {
                 Buy
               </button>
               <button
-                onClick={() => handleRemove(item.productId)}
+                onClick={() => handleRemove(item.product_id)}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-300"
               >
                 Remove
